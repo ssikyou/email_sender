@@ -5,12 +5,30 @@ from string import Template
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import os
+
+if os.path.exists('.env'):
+    print('Importing environment from .env...')
+    for line in open('.env'):
+        var = line.strip().split('=')
+        if len(var) == 2:
+            # print('{}:{}'.format(var[0], var[1]))
+            os.environ[var[0]] = var[1]
+
+import socks
+socks.setdefaultproxy(socks.SOCKS5, '127.0.0.1', 1080)
+socks.wrapmodule(smtplib)
+
 MAIL_SERVER = 'smtp.googlemail.com'
 MAIL_PORT = 587
-MAIL_USERNAME = 'dressmakercindy@gmail.com'
-MAIL_PASSWORD = '903200xiao7'
+MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
 MAIL_SENDER = 'cindy <dressmakercindy@gmail.com>'
-enable_html = False
+
+if os.environ.get('ENABLE_HTML') == 'False':
+    ENABLE_HTML = False
+else:
+    ENABLE_HTML = True
 
 def get_contacts(filename):
     """
@@ -22,8 +40,8 @@ def get_contacts(filename):
     emails = []
     with open(filename, mode='r', encoding='utf-8') as contacts_file:
         for a_contact in contacts_file:
-            names.append(a_contact.split()[0])
-            emails.append(a_contact.split()[1])
+            names.append(a_contact.split('@')[0])
+            emails.append(a_contact)
     return names, emails
 
 def read_template(filename):
@@ -39,7 +57,7 @@ def read_template(filename):
 def main():
     names, emails = get_contacts('contacts.txt') # read contacts
     message_template = read_template('message.txt')
-    if enable_html:
+    if ENABLE_HTML:
         message_html = read_template('message.html')
 
     # set up the SMTP server
@@ -49,15 +67,18 @@ def main():
 
     # For each contact, send the email:
     for name, email in zip(names, emails):
-        msg = MIMEMultipart()       # create a message
+        msg = MIMEMultipart('alternative')       # create a message
+
+        if name == 'info':
+            name = ''
 
         # add in the actual person name to the message template
         message = message_template.substitute(PERSON_NAME=name)
-        if enable_html:
+        if ENABLE_HTML:
             html = message_html.substitute(PERSON_NAME=name)
         # Prints out the message body for our sake
         print(message)
-        if enable_html:
+        if ENABLE_HTML:
             print(html)
 
         # setup the parameters of the message
@@ -67,7 +88,7 @@ def main():
         
         # add in the message body
         msg.attach(MIMEText(message, 'plain'))
-        if enable_html:
+        if ENABLE_HTML:
             msg.attach(MIMEText(html, 'html'))
         
         # send the message via the server set up earlier.
