@@ -10,7 +10,7 @@ MAIL_PORT = 587
 MAIL_USERNAME = 'dressmakercindy@gmail.com'
 MAIL_PASSWORD = '903200xiao7'
 MAIL_SENDER = 'cindy <dressmakercindy@gmail.com>'
-enable_html = False
+enable_html = True
 
 def get_contacts(filename):
     """
