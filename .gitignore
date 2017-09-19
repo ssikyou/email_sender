@@ -34,6 +34,7 @@ video/
 chris/
 bin/*.rdb
 venv/
+contacts.txt
 
 #
 # ctags and cscope files

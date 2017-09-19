@@ -30,6 +30,12 @@ if os.environ.get('ENABLE_HTML') == 'False':
 else:
     ENABLE_HTML = True
 
+if os.environ.get('DEBUG') == 'False':
+    DEBUG = False
+else:
+    DEBUG = True
+
+
 def get_contacts(filename):
     """
     Return two lists names, emails containing names and email addresses
@@ -40,8 +46,12 @@ def get_contacts(filename):
     emails = []
     with open(filename, mode='r', encoding='utf-8') as contacts_file:
         for a_contact in contacts_file:
-            names.append(a_contact.split('@')[0])
-            emails.append(a_contact)
+            a_contact_s = a_contact.strip()
+            if a_contact_s == '':
+                break
+            else:
+                names.append(a_contact_s.split('@')[0])
+                emails.append(a_contact_s)
     return names, emails
 
 def read_template(filename):
@@ -65,8 +75,14 @@ def main():
     s.starttls()
     s.login(MAIL_USERNAME, MAIL_PASSWORD)
 
+    if DEBUG:
+        print(names)
+        print(emails)
+
     # For each contact, send the email:
+    print('\nStart sending emails...')
     for name, email in zip(names, emails):
+        print('name:%s email:%s' % (name, email))
         msg = MIMEMultipart('alternative')       # create a message
 
         if name == 'info':
@@ -77,9 +93,10 @@ def main():
         if ENABLE_HTML:
             html = message_html.substitute(PERSON_NAME=name)
         # Prints out the message body for our sake
-        print(message)
-        if ENABLE_HTML:
-            print(html)
+        if DEBUG:
+            print(message)
+            if ENABLE_HTML:
+                print(html)
 
         # setup the parameters of the message
         msg['From']=MAIL_SENDER
@@ -94,7 +111,8 @@ def main():
         # send the message via the server set up earlier.
         s.send_message(msg)
         del msg
-        
+
+    print('Done!')
     # Terminate the SMTP session and close the connection
     s.quit()
     
