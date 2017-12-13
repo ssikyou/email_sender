@@ -1,4 +1,5 @@
 import smtplib
+import argparse
 
 from string import Template
 
@@ -8,7 +9,7 @@ from email.mime.text import MIMEText
 import os
 
 if os.path.exists('.env'):
-    print('Importing environment from .env...')
+    # print('Importing environment from .env...')
     for line in open('.env'):
         var = line.strip().split('=')
         if len(var) == 2:
@@ -64,11 +65,11 @@ def read_template(filename):
         template_file_content = template_file.read()
     return Template(template_file_content)
 
-def main():
+def main(template_key):
     names, emails = get_contacts('contacts.txt') # read contacts
-    message_template = read_template('message.txt')
+    message_template = read_template(template_key+'.txt')
     if ENABLE_HTML:
-        message_html = read_template('message.html')
+        message_html = read_template(template_key+'.html')
 
     # set up the SMTP server
     s = smtplib.SMTP(host=MAIL_SERVER, port=MAIL_PORT)
@@ -117,4 +118,9 @@ def main():
     s.quit()
     
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-k', action='store', dest='template_key', help='Provide email template key', default='message')
+    results = parser.parse_args()
+    if DEBUG:
+        print(results.template_key)
+    main(results.template_key)
